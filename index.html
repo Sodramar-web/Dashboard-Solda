@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Solda - SODRAMAR</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        
+        body {
+            background: #061529;
+            color: white;
+            min-height: 100vh;
+        }
+        
+        /* CABEÇALHO */
+        .header {
+            max-width: 1400px;
+            margin: 15px auto 5px;
+            display: grid;
+            grid-template-columns: 1fr 230px;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .header-title-box {
+            background: #1b2940;
+            padding: 18px 26px;
+            border-radius: 18px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        .header-title-box h1 {
+            color: white;
+            font-size: 22px;
+            letter-spacing: 1px;
+            margin-bottom: 3px;
+        }
+        
+        .subtitle {
+            color: #a8d0ff;
+            font-size: 12px;
+        }
+
+        .header-logo-box {
+            background: #ffffff;
+            border-radius: 18px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+
+        .header-logo-box img {
+            max-height: 64px;
+            width: auto;
+        }
+        
+        /* CONTROLES */
+        .controls {
+            max-width: 1400px;
+            margin: 0 auto 10px;
+            padding: 6px 10px;
+            background: transparent;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: flex-end;
+        }
+        
+        .url-display { display: none; }
+        
+        .btn {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+        }
+        
+        .btn-primary {
+            background: #3aa868;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2e8b57;
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: #2c3e50;
+            color: white;
+            display: none;
+        }
+        
+        .status {
+            min-width: 260px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            text-align: left;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            font-size: 11px;
+        }
+        
+        .status.success {
+            background: rgba(58, 168, 104, 0.2);
+            border-color: #3aa868;
+            color: #a8f5c6;
+        }
+        
+        .status.error {
+            background: rgba(255, 107, 107, 0.2);
+            border-color: #ff6b6b;
+            color: #ffd6d6;
+        }
+        
+        .status.loading {
+            background: rgba(255, 167, 38, 0.2);
+            border-color: #ffa726;
+            color: #ffe0b2;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #3aa868;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* GRID PRINCIPAL */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 180px 1fr 420px;
+            gap: 15px;
+            padding: 10px 15px 15px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        @media (max-width: 1100px) {
+            .dashboard { grid-template-columns: 1fr; }
+        }
+        
+        .card {
+            background: #1b2940;
+            border-radius: 18px;
+            padding: 15px 18px;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+        }
+        
+        .card-header {
+            color: #ffffff;
+            font-size: 15px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.12);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+        }
+
+        .employee-header,
+        .employee-list { display: none; }
+        
+        /* FILTROS ANO/MÊS */
+        .period-filter {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .filter-group { display: flex; flex-direction: column; gap: 4px; }
+        
+        .filter-label {
+            font-size: 13px;
+            color: #ffffff;
+            font-weight: 600;
+        }
+        
+        .filter-select {
+            padding: 6px 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        
+        .filter-select option { background: #1a237e; color: white; }
+        
+        /* PRODUTIVIDADE POR TIPO (CENTRAL) */
+        .period-display {
+            text-align: left;
+            margin: 4px 0 6px;
+            font-size: 14px;
+            color: #a8d0ff;
+        }
+        
+        .process-chart { margin-top: 10px; }
+        .process-item { margin-bottom: 14px; }
+        
+        .process-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+        
+        .process-name { font-weight: 600; }
+        .process-numbers { display: flex; gap: 10px; }
+        .process-number { min-width: 40px; text-align: right; }
+
+        .process-number.produced-label { font-weight: 700; }
+        .process-number.requested-label { font-weight: 700; color: #3aa868; }
+        
+        .process-bar {
+            height: 10px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .process-fill-produced {
+            height: 100%;
+            background: #ffffff;
+            border-radius: 5px;
+            transition: width 0.8s ease;
+        }
+        
+        .process-total {
+            display: flex;
+            justify-content: flex-start;
+            gap: 20px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 2px solid rgba(255, 255, 255, 0.12);
+            font-size: 13px;
+            font-weight: 600;
+        }
+        
+        .total-item { display: flex; align-items: center; gap: 6px; }
+        .total-color { width: 12px; height: 12px; border-radius: 3px; }
+        .color-produced { background: #ffffff; }
+        .color-requested { background: #3aa868; }
+        
+        /* INDICADORES GERAIS */
+        .indicators-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+        
+        .indicator {
+            background: rgba(0, 0, 0, 0.35);
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+        
+        .indicator-label {
+            font-size: 12px;
+            color: #a8d0ff;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+        
+        .indicator-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+        }
+        
+        /* DESEMPENHO INDIVIDUAL */
+        .performance-list {
+            margin-top: 8px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, auto);
+            gap: 8px;
+        }
+        
+        .performance-item {
+            border-radius: 12px;
+            background: rgba(0,0,0,0.25);
+            padding: 10px 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 115px;
+        }
+
+        .perf-name {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            text-align: center;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            line-height: 1.2;
+        }
+
+        /* GAUGE SVG */
+        .performance-gauge-container {
+            position: relative;
+            width: 90px;
+            height: 60px;
+            margin: 4px auto 6px;
+        }
+
+        .gauge-svg { width: 100%; height: 45px; }
+
+        .gauge-track {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.09);
+            stroke-width: 8;
+        }
+
+        .gauge-bar {
+            fill: none;
+            stroke-width: 8;
+            stroke-linecap: round;
+            stroke-dasharray: 0;
+            stroke-dashoffset: 0;
+            transition: stroke-dashoffset 0.8s ease;
+        }
+
+        .gauge-bar.excellent { stroke: #3aa868; }
+        .gauge-bar.good      { stroke: #ffa726; }
+        .gauge-bar.poor      { stroke: #ff6b6b; }
+
+        .perf-percent {
+            position: absolute;
+            left: 50%;
+            top: 62%;
+            transform: translate(-50%, -50%);
+            font-size: 15px;
+            font-weight: bold;
+            color: #ffffff;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+        }
+        
+        /* Legenda */
+        .gauge-legend {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 8px;
+            font-size: 9px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item { display: flex; align-items: center; gap: 3px; }
+        .legend-color { width: 8px; height: 8px; border-radius: 2px; }
+        .color-excellent { background: #3aa868; }
+        .color-good      { background: #ffa726; }
+        .color-poor      { background: #ff6b6b; }
+        
+        /* MÉDIA DO SETOR */
+        .average-display {
+            text-align: center;
+            padding: 10px 0 4px;
+            margin-top: 8px;
+            border-top: 2px solid rgba(255, 255, 255, 0.12);
+        }
+        
+        .average-value {
+            font-size: 22px;
+            font-weight: bold;
+            color: #3aa868;
+            margin: 4px 0;
+        }
+        
+        .average-label {
+            font-size: 11px;
+            color: #a8d0ff;
+            text-transform: uppercase;
+        }
+        
+        .timestamp { font-size: 11px; color: rgba(255, 255, 255, 0.5); }
+        
+        .days-container { display: flex; gap: 10px; margin-top: 10px; }
+        
+        .day-box {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            background: rgba(0, 0, 255, 0.18);
+            border-radius: 10px;
+        }
+        
+        .day-label { font-size: 11px; color: #a8d0ff; margin-bottom: 4px; }
+        .day-value { font-size: 20px; font-weight: bold; color: white; }
+        
+        /* SEÇÃO DE DADOS */
+        .data-section {
+            max-width: 1400px;
+            margin: 5px auto 20px;
+            padding: 14px 16px;
+            background: #121e33;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        .data-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        
+        .data-header h3 { color: #a8d0ff; }
+        
+        .data-count {
+            background: rgba(58, 168, 104, 0.2);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .data-table-container {
+            max-height: 420px;
+            overflow-y: auto;
+            border-radius: 10px;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+        
+        .data-table th {
+            background: rgba(58, 168, 104, 0.3);
+            padding: 8px;
+            text-align: left;
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        
+        .data-table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .data-table tr:hover { background: rgba(255, 255, 255, 0.04); }
+        
+        .update-countdown,
+        .auto-update-controls { display: none; }
+    </style>
+</head>
+<body>
+    <!-- CABEÇALHO -->
+    <div class="header">
+        <div class="header-title-box">
+            <h1>RELATÓRIO DE DESEMPENHO – SOLDADORES</h1>
+            <div class="subtitle">Indicadores de produtividade e eficiência</div>
+        </div>
+        <div class="header-logo-box">
+            <img src="sodramar-logo.png" alt="Sodramar">
+        </div>
+    </div>
+
+    <!-- CONTROLES -->
+    <div class="controls">
+        <div class="url-display" id="urlDisplay"></div>
+        
+        <button class="btn btn-secondary" id="intervaloBtn" style="display: none;">
+            ⏱️ Intervalo: 70s
+        </button>
+        
+        <button class="btn btn-primary" onclick="carregarDados()">
+            <span id="loadingSpinner" class="loading-spinner" style="display: none;"></span>
+            📥 Carregar Dados
+        </button>
+        
+        <div class="status" id="statusMessage">
+            Clique em "Carregar Dados" para iniciar
+        </div>
+    </div>
+    
+    <div class="dashboard">
+        <!-- ESQUERDA: ANO / MÊS -->
+        <div class="card">
+            <div class="card-header">
+                <span>Ano / Mês</span>
+            </div>
+            
+            <div class="period-filter">
+                <div class="filter-group">
+                    <span class="filter-label">Ano:</span>
+                    <select class="filter-select" id="yearSelect" onchange="filtrarPorPeriodo()">
+                        <option value="todos">Todos os anos</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <span class="filter-label">Mês:</span>
+                    <select class="filter-select" id="monthSelect" onchange="filtrarPorPeriodo()">
+                        <option value="todos">Todos os meses</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="card-header employee-header">
+                <span>Funcionários</span>
+                <span id="employeeCount">0</span>
+            </div>
+            
+            <div class="employee-list" id="employeeList">
+                <div class="employee-item">Carregando...</div>
+            </div>
+        </div>
+        
+        <!-- CENTRO: PRODUTIVIDADE E INDICADORES GERAIS -->
+        <div class="card">
+            <div class="card-header">
+                <span>Produtividade por Tipo</span>
+            </div>
+            
+            <div class="period-display" id="periodDisplay">
+                Período: Todos
+            </div>
+            
+            <div class="process-chart" id="processChart">
+                <div class="process-item">
+                    <div class="process-header">
+                        <span class="process-name">Carregando...</span>
+                        <div class="process-numbers">
+                            <span class="process-number produced-label">0</span>
+                            <span class="process-number requested-label">0</span>
+                        </div>
+                    </div>
+                    <div class="process-bar">
+                        <div class="process-fill-produced" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="process-total">
+                <div class="total-item">
+                    <div class="total-color color-produced"></div>
+                    <span>Produzido:</span>
+                    <span id="totalProduced">0</span>
+                </div>
+                <div class="total-item">
+                    <div class="total-color color-requested"></div>
+                    <span>Solicitado:</span>
+                    <span id="totalRequested">0</span>
+                </div>
+            </div>
+            
+            <div class="card-header" style="margin-top: 16px;">
+                <span>Indicadores Gerais</span>
+                <span id="selectedEmployee">Todos os soldadores</span>
+            </div>
+            
+            <div class="indicators-grid">
+                <div class="indicator">
+                    <div class="indicator-label">Produzido</div>
+                    <div class="indicator-value" id="producedValue">0</div>
+                </div>
+                
+                <div class="indicator">
+                    <div class="indicator-label">Solicitado</div>
+                    <div class="indicator-value" id="requestedValue">0</div>
+                </div>
+                
+                <div class="indicator">
+                    <div class="indicator-label">Eficiência</div>
+                    <div class="indicator-value" id="efficiencyValue">0%</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- DIREITA: DESEMPENHO INDIVIDUAL -->
+        <div class="card">
+            <div class="card-header">Desempenho Individual</div>
+            
+            <div class="performance-list" id="performanceList"></div>
+            
+            <div class="gauge-legend">
+                <div class="legend-item">
+                    <div class="legend-color color-excellent"></div>
+                    <span>Alta (≥80%)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color color-good"></div>
+                    <span>Média (60-79%)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color color-poor"></div>
+                    <span>Baixa (&lt;60%)</span>
+                </div>
+            </div>
+            
+            <div class="average-display">
+                <div class="average-label">Média do Setor</div>
+                <div class="average-value" id="sectorAverage">0%</div>
+                <div class="timestamp" id="sectorTimestamp">Atualizado: --:--</div>
+            </div>
+            
+            <div class="card-header" style="margin-top: 6px;">
+                <span>Dias Trabalhados</span>
+            </div>
+            
+            <div class="days-container">
+                <div class="day-box">
+                    <div class="day-label">Previsto</div>
+                    <div class="day-value" id="daysPlanned">--</div>
+                </div>
+                <div class="day-box">
+                    <div class="day-label">Trabalhado</div>
+                    <div class="day-value" id="daysWorked">--</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- DADOS COMPLETOS -->
+    <div class="data-section" id="dataSection">
+        <div class="data-header">
+            <h3>📊 Dados Completos da Planilha</h3>
+            <div class="data-count" id="totalRecords">0 registros</div>
+        </div>
+        
+        <div class="data-table-container">
+            <table class="data-table" id="dataTable"></table>
+        </div>
+    </div>
+
+<script>
+/* ===============================
+   WEBAPP
+   =============================== */
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxJRYsSspb2mfqocIHZ1XJ3gEuntyPerhptbXB4AOJtwfyaeqbR0fhiKGdcnQBD2ufNgg/exec";
+
+/* ===============================
+   LIVE AUTOMÁTICO
+   =============================== */
+const LIVE_OK_MS        = 2000;   // “quase instantâneo” (1s = mais pesado / 3s = mais leve)
+const LIVE_HIDDEN_MS    = 12000;  // quando a aba estiver oculta
+const LIMIT_FULL        = 2000;
+const LIMIT_DELTA       = 400;
+const RETRY_START_MS    = 2500;   // se der erro, ele tenta sozinho
+const RETRY_MAX_MS      = 15000;
+
+const TIPOS_PRODUTO = [
+  'DUCHA',
+  'TROCADOR DE CALOR',
+  'ACESSÓRIOS',
+  'GERADOR DE CALOR',
+  'SAUNAS / STEAM INOX',
+  'CASCATAS',
+  'OUTROS'
+];
+
+let dadosPlanilha = [];
+let dadosFiltrados = [];
+let anosDisponiveis = [];
+let mesesDisponiveis = [];
+let estadoFiltros = { ano: 'todos', mes: 'todos' };
+
+// “cursor” incremental
+let lastTimestampISO = null;
+
+// loop
+let loopTimer = null;
+let isSyncing = false;
+let retryMs = RETRY_START_MS;
+
+// proxy fixado (pra não ficar testando 3 toda hora)
+let modoFetchEscolhido = null; // 0=allorigins, 1=corsproxy, 2=direct
+
+const statusElement = document.getElementById('statusMessage');
+const loadingSpinner = document.getElementById('loadingSpinner');
+
+function atualizarStatus(mensagem, tipo = 'info') {
+  statusElement.textContent = mensagem;
+  statusElement.className = 'status';
+  if (tipo === 'success') statusElement.classList.add('success');
+  else if (tipo === 'error') statusElement.classList.add('error');
+  else if (tipo === 'loading') statusElement.classList.add('loading');
+}
+
+/* ===============================
+   FETCH JSON com proxy (anti-CORS)
+   =============================== */
+async function fetchJSON(url) {
+  const tentativas = [
+    { modo: 1, url: `https://corsproxy.io/?${encodeURIComponent(url)}` },
+    { modo: 0, url: `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}` },
+    { modo: 2, url: url }
+  ];
+
+  // tenta primeiro o modo já escolhido
+  if (modoFetchEscolhido !== null) {
+    const item = tentativas.find(t => t.modo === modoFetchEscolhido);
+    if (item) {
+      try {
+        const r = await fetch(item.url, { headers: { 'Accept': 'application/json' } });
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        const txt = await r.text();
+        return JSON.parse(txt);
+      } catch (_) {}
+    }
+  }
+
+  // tenta os outros e fixa o que funcionar
+  for (const t of tentativas) {
+    try {
+      const r = await fetch(t.url, { headers: { 'Accept': 'application/json' } });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const txt = await r.text();
+      const json = JSON.parse(txt);
+      modoFetchEscolhido = t.modo;
+      return json;
+    } catch (e) {}
+  }
+
+  throw new Error("Não foi possível conectar ao WebApp (proxy/CORS).");
+}
+
+/* ===============================
+   Helpers
+   =============================== */
+function parseNumeroBR(valor) {
+  if (valor === null || valor === undefined || valor === '') return 0;
+  const s = valor.toString().replace(/\./g, '').replace(',', '.');
+  const n = parseFloat(s);
+  return isNaN(n) ? 0 : n;
+}
+
+function extrairData(dataStr) {
+  if (!dataStr) return null;
+  if (dataStr instanceof Date) return dataStr;
+
+  const s = dataStr.toString().trim();
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    const [y, m, d] = s.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+
+  const partes = s.split('/');
+  if (partes.length === 3) {
+    const dia = parseInt(partes[0], 10);
+    const mes = parseInt(partes[1], 10) - 1;
+    let ano = parseInt(partes[2], 10);
+    if (ano < 100) ano += 2000;
+    return new Date(ano, mes, dia);
+  }
+
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) return d;
+
+  return null;
+}
+
+function obterNomeMes(mes) {
+  const meses = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+  ];
+  return meses[mes - 1] || '--';
+}
+
+function inferirGrupoDoCodigo(codigoServico) {
+  if (!codigoServico) return 'OUTROS';
+  const c = codigoServico.toString().toUpperCase();
+
+  if (c.includes("DUCHA") || c.includes("ARCO") || c.includes("PESCOÇO") || c.includes("TAMPÃO DUCHA") || c.includes("BASE DUCHA")) return "DUCHA";
+  if (c.includes("TROCADOR") || c.includes("CALOR")) return "TROCADOR DE CALOR";
+  if (c.includes("CASCATA")) return "CASCATAS";
+  if (c.includes("SAUNA") || c.includes("STEAM") || c.includes("INOX") || c.includes("FORNO")) return "SAUNAS / STEAM INOX";
+  if (c.includes("MOTOR") || c.includes("THI") || c.includes("HASTE") || c.includes("SUP. MOTOR") || c.includes("SUPORTE")) return "GERADOR DE CALOR";
+  if (c.includes("GRADE") || c.includes("TAMPA") || c.includes("BOTÃO") || c.includes("FLANGE") || c.includes("FILTRO") || c.includes("DRENO")) return "ACESSÓRIOS";
+  if (c.includes("BASE") || c.includes("CORPO") || c.includes("LUVA") || c.includes("TRIPÉ") || c.includes("BANCO") || c.includes("ASSENTO")) return "ACESSÓRIOS";
+
+  return "OUTROS";
+}
+
+function normalizarRegistro(r) {
+  const obj = { ...r };
+
+  obj['Funcionário'] = obj['Funcionário'] || obj['Funcionario'] || obj['funcionario'] || '';
+  obj['Data'] = obj['Data'] || obj['data'] || obj['_data'] || '';
+  obj['Quantidade Produzida'] = obj['Quantidade Produzida'] ?? obj['qtdProduzida'] ?? obj['Qtd Produzida'] ?? '';
+  obj['Quantidade Solicitada'] = obj['Quantidade Solicitada'] ?? obj['qtdSolicitada'] ?? obj['Qtd Solicitada'] ?? '';
+  obj['Código do Serviço'] = obj['Código do Serviço'] || obj['codigoServico'] || obj['Codigo do Servico'] || '';
+
+  obj._timestampISO = obj._timestampISO || obj.Timestamp || obj['Carimbo de data/hora'] || null;
+
+  const dataObj = extrairData(obj['Data']);
+  if (dataObj) {
+    obj._ano = dataObj.getFullYear();
+    obj._mes = dataObj.getMonth() + 1;
+    obj._mesNome = obterNomeMes(obj._mes);
+    obj._dataCompleta = dataObj;
+  }
+
+  obj._grupoNormalizado = inferirGrupoDoCodigo(obj['Código do Serviço']);
+  return obj;
+}
+
+function makeKeyDedup(r) {
+  const rid = (r.RequestId || r.requestId || '').toString().trim();
+  if (rid) return "RID|" + rid;
+
+  const ts  = (r._timestampISO || r.Timestamp || '').toString();
+  const fun = (r['Funcionário'] || '').toString();
+  const cod = (r['Código do Serviço'] || '').toString();
+  const qp  = (r['Quantidade Produzida'] || '').toString();
+  const qs  = (r['Quantidade Solicitada'] || '').toString();
+  const ini = (r['Início'] || r['Inicio'] || '').toString();
+  const fim = (r['Fim'] || '').toString();
+  return `S|${ts}|${fun}|${cod}|${qs}|${qp}|${ini}|${fim}`;
+}
+
+/* ===============================
+   Períodos e filtros
+   =============================== */
+function extrairPeriodosDisponiveis() {
+  const anosSet = new Set();
+  const mesesSet = new Set();
+
+  dadosPlanilha.forEach(linha => {
+    if (linha._ano) anosSet.add(linha._ano);
+    if (linha._mes) mesesSet.add(`${linha._mes}-${linha._mesNome}`);
+  });
+
+  anosDisponiveis = Array.from(anosSet).sort((a, b) => b - a);
+  mesesDisponiveis = Array.from(mesesSet).map(ch => {
+    const [numero, nome] = ch.split('-');
+    return { numero: parseInt(numero), nome };
+  }).sort((a, b) => a.numero - b.numero);
+}
+
+function restaurarEstadoFiltros() {
+  const yearSelect = document.getElementById('yearSelect');
+  const monthSelect = document.getElementById('monthSelect');
+
+  yearSelect.innerHTML = '<option value="todos">Todos os anos</option>';
+  monthSelect.innerHTML = '<option value="todos">Todos os meses</option>';
+
+  anosDisponiveis.forEach(ano => {
+    const op = document.createElement('option');
+    op.value = ano;
+    op.textContent = ano;
+    yearSelect.appendChild(op);
+  });
+
+  mesesDisponiveis.forEach(mes => {
+    const op = document.createElement('option');
+    op.value = mes.numero;
+    op.textContent = mes.nome;
+    monthSelect.appendChild(op);
+  });
+
+  yearSelect.value = estadoFiltros.ano;
+  monthSelect.value = estadoFiltros.mes;
+
+  if (![...yearSelect.options].some(o => o.value === estadoFiltros.ano)) {
+    estadoFiltros.ano = 'todos'; yearSelect.value = 'todos';
+  }
+  if (![...monthSelect.options].some(o => o.value === estadoFiltros.mes)) {
+    estadoFiltros.mes = 'todos'; monthSelect.value = 'todos';
+  }
+}
+
+function atualizarInfoPeriodo() {
+  let periodoInfo = '';
+  if (estadoFiltros.ano === 'todos' && estadoFiltros.mes === 'todos') periodoInfo = 'Todos os períodos';
+  else if (estadoFiltros.ano !== 'todos' && estadoFiltros.mes === 'todos') periodoInfo = `Ano: ${estadoFiltros.ano}`;
+  else if (estadoFiltros.ano === 'todos' && estadoFiltros.mes !== 'todos') periodoInfo = `Mês: ${obterNomeMes(parseInt(estadoFiltros.mes))}`;
+  else periodoInfo = `${obterNomeMes(parseInt(estadoFiltros.mes))} de ${estadoFiltros.ano}`;
+
+  document.getElementById('periodDisplay').textContent = periodoInfo;
+}
+
+function aplicarFiltros() {
+  dadosFiltrados = dadosPlanilha.filter(l => {
+    if (estadoFiltros.ano !== 'todos' && l._ano !== parseInt(estadoFiltros.ano)) return false;
+    if (estadoFiltros.mes !== 'todos' && l._mes !== parseInt(estadoFiltros.mes)) return false;
+    return true;
+  });
+  atualizarInfoPeriodo();
+}
+
+function filtrarPorPeriodo() {
+  const yearSelect = document.getElementById('yearSelect');
+  const monthSelect = document.getElementById('monthSelect');
+  estadoFiltros.ano = yearSelect.value;
+  estadoFiltros.mes = monthSelect.value;
+  aplicarFiltros();
+  atualizarDashboard();
+}
+window.filtrarPorPeriodo = filtrarPorPeriodo;
+
+/* ===============================
+   Dashboard / tabela (iguais ao seu)
+   =============================== */
+function calcularEficienciaIndividual(funcionario) {
+  const dadosFuncionario = dadosFiltrados.filter(l => l['Funcionário'] === funcionario);
+  if (dadosFuncionario.length === 0) return 0;
+
+  let prod = 0, sol = 0;
+  dadosFuncionario.forEach(l => {
+    prod += parseNumeroBR(l['Quantidade Produzida']);
+    sol  += parseNumeroBR(l['Quantidade Solicitada']);
+  });
+
+  if (sol <= 0) return 0;
+  return (prod / sol) * 100;
+}
+
+function atualizarDashboard() {
+  if (!dadosFiltrados || dadosFiltrados.length === 0) { limparDashboard(); return; }
+
+  const funcionarios = [...new Set(dadosFiltrados.map(r => r['Funcionário']).filter(Boolean))].sort();
+
+  atualizarProcessosSolda();
+  atualizarMediasIndividuais(funcionarios);
+  calcularMediaSetor(funcionarios);
+  atualizarEstatisticas();
+
+  document.getElementById('selectedEmployee').textContent = 'Todos os soldadores';
+}
+
+function limparDashboard() {
+  document.getElementById('processChart').innerHTML =
+    '<div class="process-item"><div class="process-header"><span class="process-name">Sem dados</span><div class="process-numbers"><span class="process-number produced-label">0</span><span class="process-number requested-label">0</span></div></div><div class="process-bar"><div class="process-fill-produced" style="width: 0%"></div></div></div>';
+  document.getElementById('totalProduced').textContent = '0';
+  document.getElementById('totalRequested').textContent = '0';
+  document.getElementById('sectorAverage').textContent = '0%';
+  limparEstatisticas();
+  document.getElementById('performanceList').innerHTML = '';
+}
+
+function atualizarMediasIndividuais(funcionarios) {
+  const container = document.getElementById('performanceList');
+  if (!funcionarios || funcionarios.length === 0) { container.innerHTML = ''; return; }
+
+  const funcionariosComEfic = funcionarios.map(nome => ({
+    nome, media: calcularEficienciaIndividual(nome)
+  })).sort((a, b) => b.media - a.media);
+
+  const funcionariosExibir = funcionariosComEfic.slice(0, 6);
+  container.innerHTML = '';
+
+  funcionariosExibir.forEach(item => {
+    let gaugeClass = 'poor';
+    if (item.media >= 80) gaugeClass = 'excellent';
+    else if (item.media >= 60) gaugeClass = 'good';
+
+    const percentage = Math.min(Math.max(item.media, 0), 100);
+
+    const div = document.createElement('div');
+    div.className = 'performance-item';
+    div.innerHTML = `
+      <span class="perf-name">${item.nome}</span>
+      <div class="performance-gauge-container">
+        <svg class="gauge-svg" viewBox="0 0 100 50">
+          <path class="gauge-track" d="M10 40 A40 40 0 0 1 90 40"></path>
+          <path class="gauge-bar ${gaugeClass}" data-perc="${percentage.toFixed(1)}" d="M10 40 A40 40 0 0 1 90 40"></path>
+        </svg>
+        <div class="perf-percent">${item.media.toFixed(1)}%</div>
+      </div>`;
+    container.appendChild(div);
+  });
+
+  inicializarGauges();
+}
+
+function inicializarGauges() {
+  const paths = document.querySelectorAll('#performanceList .gauge-bar');
+  paths.forEach(path => {
+    const perc = parseFloat(path.getAttribute('data-perc')) || 0;
+    const length = path.getTotalLength();
+    path.style.strokeDasharray = length;
+    path.style.strokeDashoffset = length * (1 - perc / 100);
+  });
+}
+
+function calcularMediaSetor(funcionarios) {
+  if (!funcionarios || funcionarios.length === 0) {
+    document.getElementById('sectorAverage').textContent = '0%';
+    return;
+  }
+  let soma = 0, cont = 0;
+  funcionarios.forEach(f => { const v = calcularEficienciaIndividual(f); if (!isNaN(v)) { soma += v; cont++; } });
+
+  const media = cont ? (soma / cont) : 0;
+  document.getElementById('sectorAverage').textContent = media.toFixed(1) + '%';
+
+  const agora = new Date();
+  document.getElementById('sectorTimestamp').textContent =
+    `Atualizado: ${agora.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
+}
+
+function atualizarProcessosSolda() {
+  const container = document.getElementById('processChart');
+  container.innerHTML = '';
+
+  if (!dadosFiltrados || dadosFiltrados.length === 0) return;
+
+  const contadores = {};
+  TIPOS_PRODUTO.forEach(t => contadores[t] = { produzido: 0, solicitado: 0 });
+
+  dadosFiltrados.forEach(l => {
+    const grupo = l._grupoNormalizado || 'OUTROS';
+    const produzido = parseNumeroBR(l['Quantidade Produzida']);
+    const solicitado = parseNumeroBR(l['Quantidade Solicitada']);
+    if (!contadores[grupo]) contadores[grupo] = { produzido: 0, solicitado: 0 };
+    contadores[grupo].produzido += produzido;
+    contadores[grupo].solicitado += solicitado;
+  });
+
+  let totalProd = 0, totalSol = 0;
+  let maxProd = 0;
+  TIPOS_PRODUTO.forEach(t => maxProd = Math.max(maxProd, contadores[t]?.produzido || 0));
+  if (!maxProd) maxProd = 1;
+
+  TIPOS_PRODUTO.forEach(tipo => {
+    const d = contadores[tipo] || { produzido: 0, solicitado: 0 };
+    totalProd += d.produzido; totalSol += d.solicitado;
+
+    const pct = (d.produzido / maxProd) * 100;
+    const item = document.createElement('div');
+    item.className = 'process-item';
+    item.innerHTML = `
+      <div class="process-header">
+        <span class="process-name">${tipo}</span>
+        <div class="process-numbers">
+          <span class="process-number produced-label">${Math.round(d.produzido)}</span>
+          <span class="process-number requested-label">${Math.round(d.solicitado)}</span>
+        </div>
+      </div>
+      <div class="process-bar"><div class="process-fill-produced" style="width:${pct}%"></div></div>`;
+    container.appendChild(item);
+  });
+
+  document.getElementById('totalProduced').textContent = Math.round(totalProd);
+  document.getElementById('totalRequested').textContent = Math.round(totalSol);
+}
+
+function atualizarEstatisticas() {
+  if (!dadosFiltrados || !dadosFiltrados.length) { limparEstatisticas(); return; }
+
+  let prod = 0, sol = 0;
+  const dias = new Set();
+
+  dadosFiltrados.forEach(l => {
+    prod += parseNumeroBR(l['Quantidade Produzida']);
+    sol  += parseNumeroBR(l['Quantidade Solicitada']);
+    if (l['Data']) dias.add(l['Data'].toString());
+  });
+
+  const efic = sol > 0 ? (prod / sol) * 100 : 0;
+  document.getElementById('producedValue').textContent = Math.round(prod);
+  document.getElementById('requestedValue').textContent = Math.round(sol);
+  document.getElementById('efficiencyValue').textContent = efic.toFixed(1) + '%';
+
+  document.getElementById('daysWorked').textContent = dias.size;
+  document.getElementById('daysPlanned').textContent = '22';
+}
+
+function limparEstatisticas() {
+  document.getElementById('producedValue').textContent = '0';
+  document.getElementById('requestedValue').textContent = '0';
+  document.getElementById('efficiencyValue').textContent = '0%';
+  document.getElementById('daysWorked').textContent = '--';
+  document.getElementById('daysPlanned').textContent = '--';
+}
+
+function atualizarTabelaDados() {
+  const tabela = document.getElementById('dataTable');
+  const totalRecords = document.getElementById('totalRecords');
+
+  tabela.innerHTML = '';
+  totalRecords.textContent = `${dadosPlanilha.length} registros`;
+
+  if (!dadosPlanilha.length) return;
+
+  const colunasPreferidas = [
+    'Carimbo de data/hora','Data','Funcionário','Código do Serviço',
+    'Quantidade Produzida','Quantidade Solicitada','Início','Fim','Observações'
+  ];
+  const cabecalhos = colunasPreferidas.filter(c => c in dadosPlanilha[0]);
+
+  const thead = document.createElement('thead');
+  const trHead = document.createElement('tr');
+  cabecalhos.forEach(c => { const th = document.createElement('th'); th.textContent = c; trHead.appendChild(th); });
+  ['Tipo','Ano','Mês'].forEach(t => { const th = document.createElement('th'); th.textContent = t; trHead.appendChild(th); });
+  thead.appendChild(trHead);
+  tabela.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  dadosPlanilha.forEach((linha, idx) => {
+    const tr = document.createElement('tr');
+    cabecalhos.forEach(c => { const td = document.createElement('td'); td.textContent = (linha[c] ?? '').toString(); tr.appendChild(td); });
+    const tdTipo = document.createElement('td'); tdTipo.textContent = linha._grupoNormalizado || 'OUTROS'; tr.appendChild(tdTipo);
+    const tdAno  = document.createElement('td'); tdAno.textContent  = linha._ano || '--'; tr.appendChild(tdAno);
+    const tdMes  = document.createElement('td'); tdMes.textContent  = linha._mesNome || '--'; tr.appendChild(tdMes);
+    if (idx % 2 === 0) tr.style.backgroundColor = 'rgba(255,255,255,0.02)';
+    tbody.appendChild(tr);
+  });
+  tabela.appendChild(tbody);
+}
+
+/* ===============================
+   SYNC: full + delta (after)
+   =============================== */
+async function syncDados(full = false) {
+  if (isSyncing) return;
+  isSyncing = true;
+
+  try {
+    if (full) {
+      loadingSpinner.style.display = 'inline-block';
+      atualizarStatus('📥 Carregando dados (inicial)...', 'loading');
+    } else {
+      atualizarStatus('🔄 Atualizando ao vivo...', 'loading');
+    }
+
+    const limit = full ? LIMIT_FULL : LIMIT_DELTA;
+    let url = `${WEB_APP_URL}?limit=${limit}&_=${Date.now()}`;
+
+    if (!full && lastTimestampISO) {
+      url += `&after=${encodeURIComponent(lastTimestampISO)}`;
+    }
+
+    const json = await fetchJSON(url);
+    if (!json || !json.success) throw new Error(json?.error || json?.message || 'Resposta inválida');
+
+    const registros = Array.isArray(json.registros) ? json.registros : [];
+    if (json.lastTimestamp) lastTimestampISO = json.lastTimestamp;
+
+    if (full) {
+      dadosPlanilha = registros.map(normalizarRegistro);
+    } else if (registros.length) {
+      const novos = registros.map(normalizarRegistro);
+      const seen = new Set(dadosPlanilha.map(makeKeyDedup));
+      const toAdd = [];
+      for (const r of novos) {
+        const k = makeKeyDedup(r);
+        if (seen.has(k)) continue;
+        seen.add(k);
+        toAdd.push(r);
+      }
+      if (toAdd.length) dadosPlanilha.unshift(...toAdd);
+    }
+
+    extrairPeriodosDisponiveis();
+    restaurarEstadoFiltros();
+    aplicarFiltros();
+
+    atualizarTabelaDados();
+    atualizarDashboard();
+
+    // sucesso → reseta backoff
+    retryMs = RETRY_START_MS;
+
+    const agora = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    if (full) atualizarStatus(`✅ ${dadosPlanilha.length} registros • Ao vivo (${LIVE_OK_MS/1000}s) • ${agora}`, 'success');
+    else {
+      if (registros.length) atualizarStatus(`✅ +${registros.length} novo(s) • ${agora}`, 'success');
+      else atualizarStatus(`✅ Ao vivo • sem mudanças • ${agora}`, 'success');
+    }
+
+  } catch (e) {
+    atualizarStatus(`❌ Erro: ${e.message} • tentando de novo...`, 'error');
+    // backoff automático
+    retryMs = Math.min(Math.round(retryMs * 1.5), RETRY_MAX_MS);
+  } finally {
+    isSyncing = false;
+    loadingSpinner.style.display = 'none';
+  }
+}
+
+/* ===============================
+   LOOP AUTOMÁTICO (sempre ligado)
+   =============================== */
+function agendarProximo() {
+  if (loopTimer) clearTimeout(loopTimer);
+
+  const delay = document.hidden ? LIVE_HIDDEN_MS : LIVE_OK_MS;
+  const usarDelay = (statusElement.classList.contains('error')) ? retryMs : delay;
+
+  loopTimer = setTimeout(async () => {
+    await syncDados(false);
+    agendarProximo();
+  }, usarDelay);
+}
+
+async function iniciarAutomatico() {
+  // carga inicial (full) e depois delta
+  await syncDados(true);
+  agendarProximo();
+}
+
+function pararAutomatico() {
+  if (loopTimer) clearTimeout(loopTimer);
+  loopTimer = null;
+}
+
+/* ===============================
+   Botão vira “Atualizar agora” (opcional)
+   =============================== */
+window.carregarDados = async function () {
+  // clique manual só força um full
+  lastTimestampISO = null;
+  await syncDados(true);
+};
+
+document.addEventListener('visibilitychange', () => {
+  // quando voltar pra aba, força um delta na hora
+  if (!document.hidden) syncDados(false);
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  // inicia sozinho, sem clicar em nada
+  setTimeout(() => iniciarAutomatico(), 600);
+});
+</script>
+</body>
+</html>
